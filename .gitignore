@@ -1,2 +1,7 @@
 vars.sh
 test.sh
+RUN/docker.sh
+RUN/vm.sh
+VARS/vars-docker.sh
+VARS/vars-vm.sh
+.gitignore

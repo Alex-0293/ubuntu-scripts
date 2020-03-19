@@ -34,7 +34,8 @@ SMTPPass=""
 Task1Comment=""
 Task1time=""
 Task1=""
-
+# Docker stack user
+dockerUser=""
 # prefix for testing in different path`s ""
 rootpath=""
 

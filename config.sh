@@ -29,10 +29,10 @@ if [ -n $NtpServer ]; then
 	echo ""
 fi
 echo "Packets update..."
-echo "========================================================================================"
+	echo "========================================================================================"
 	sudo apt-get update && apt-get upgrade -y
-echo ""
-sleep 2s
+	echo ""
+	sleep 2s
 if [ -n $Timezone ]; then
 	echo "Time zone and Locale Configuring..."
 	echo "========================================================================================"
@@ -244,12 +244,6 @@ if [ -n $unattendedupgrades ]; then
 	sleep 2s
 	echo ""	
 fi
-# echo "Remove boot delay..."
-# echo "========================================================================================"
-# 	#sudo systemctl edit --full systemd-networkd-wait-online.service
-# 	#ExecStart=/lib/systemd/systemd-networkd-wait-online --timeout 1
-# echo ""
-# 	sleep 2s
 if [ -n $rkhunterfile ]; then
 	echo "Install RKHunter IDS..."
 	echo "========================================================================================"
@@ -271,14 +265,49 @@ if [ -n $rkhunterfile ]; then
 	echo ""	
 fi
 echo "Installing Fail2ban..."
-echo "========================================================================================"
-	sudo apt-get install fail2ban -y	
-echo ""
+	echo "========================================================================================"
+		sudo apt-get install fail2ban -y	
+	echo ""
 echo "Remove unused packages..."
-echo "========================================================================================"
+	echo "========================================================================================"
 	sudo apt autoremove -y
-echo ""
-if [ -n $rkhunterfile ]; then
+	echo ""
+if [ -n $dockerUser ]; then
+	echo "Install docker..."
+	echo "========================================================================================"
+	# Download Docker
+	curl -fsSL get.docker.com -o get-docker.sh
+	# Install Docker using the stable channel (instead of the default "edge")
+	CHANNEL=stable sh get-docker.sh
+	# Remove Docker install script
+	rm get-docker.sh
+	# Add user
+	sudo usermod -aG docker $dockerUser
+	#Install packages to allow apt to use a repository over HTTPS:
+	sudo apt-get install -y \
+		apt-transport-https \
+		ca-certificates \
+		curl \
+		gnupg-agent 
+	#Add Docker’s official GPG key:
+	curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+	#Use the following command to set up the stable repository
+	sudo add-apt-repository \
+	deb [arch=amd64] https://download.docker.com/linux/ubuntu \
+	$(lsb_release -cs) \
+	stable
+	docker -v   
+	sleep 2s
+	echo ""
+	echo "Install docker-compose..."
+	echo "========================================================================================"
+	sudo curl -L "https://github.com/docker/compose/releases/download/1.25.4/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+	sudo chmod +x /usr/local/bin/docker-compose
+	docker-compose -v
+	sleep 2s
+	echo ""
+fi
+if [ -n $Task1 ]; then
 	echo "Add scheduled tasks..."
 	echo "========================================================================================"
 	#write out current crontab
@@ -311,8 +340,8 @@ if [ -n $sshdfile ]; then
 	CheckConfigFile "sysctl -p $file | grep 'sysctl:'" $file $CheckResult
 
 	rm $CheckResult
+	echo ""
 fi
-echo ""
 echo "Script complited!"
 read -p "Reboot the system now? [Y/N]" answer
 case $answer in
