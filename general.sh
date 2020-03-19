@@ -46,15 +46,34 @@ function RemoveStringsByNumbers {
     fi
 }
 function CheckConfigFile {
-    echo ""
-    echo "==================================="
-    echo "Checking config....."
+    #$1 Command
+    #$2 File
+    #$3 ResultFile
+    #$4 Action if correct
     #echo "sudo sh -c '$1'"
-    if [ -f $1 ]; then
-        echo "file $1 - exist!"
-        sudo sh -c "$1"
+    if [ -f $2 ]; then
+        echo "file $2 - exist!"
     else
-        echo "file $1 - NOT exist!!!!"
+        echo "file $2 - NOT exist!!!!"
+    fi
+    if [ "$3" = "" ]; then
+        sudo sh -c "$1"
+        correct=false
+    else
+        sudo sh -c "$1" &> $3
+        #echo "sudo sh -c \"$1\" &> $3"
+        if [ $(grep '' $3 | wc -l) = 0 ]; then
+            echo "$2 is correct!"
+            correct=true	
+        else
+            echo "$2 is incorrect!"
+            cat $3
+            correct=false
+        fi        
+    fi
+    if [ $correct = true ]; then
+        sudo sh -c "$4"
+        echo "sudo sh -c \"$4\""
     fi
 }
 function AddOrReplaceParamInFile {
@@ -77,7 +96,7 @@ function AddOrReplaceParamInFile {
             level=""
         fi
     
-        echo $level$1$2
+        echo - $level$1$2
 
         ReplaceSpecialCharacters "$1"
         ReplParam=$ReplaceSpecialCharacters

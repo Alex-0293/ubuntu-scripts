@@ -1,10 +1,25 @@
 #!/bin/bash
+
 source ./general.sh
 source ./vars.sh
 
 clear
 
 echo "Ubuntu 18.04 config started..."
+echo "Set hostname..."
+echo "========================================================================================"
+sudo hostnamectl set-hostname $HostName
+echo $HostName
+echo ""
+echo "Set NTP server..."
+echo "========================================================================================"
+echo "NTP=$NtpServer" >> /etc/systemd/timesyncd.conf
+echo $NtpServer
+timedatectl set-ntp true
+service systemd-timesyncd  restart
+service systemd-timesyncd status
+sleep 5s
+echo ""
 echo "Packets update..."
 echo "========================================================================================"
 	sudo apt-get update && apt-get upgrade -y
@@ -69,7 +84,7 @@ echo "==========================================================================
 	if [ -f $file ]; then
         echo "file $file - exist!"
 		AddOrReplaceParamInFile "# Turn on execshield" ""  $file
-		AddOrReplaceParamInFile "kernel.exec-shield" "=1"  $file $FirstLevel
+		#AddOrReplaceParamInFile "kernel.exec-shield" "=1"  $file $FirstLevel #options turned off in Ubuntu 18
 		AddOrReplaceParamInFile "kernel.randomize_va_space" "=1"  $file $FirstLevel
 		AddOrReplaceParamInFile "# Enable IP spoofing protection" ""  $file
 		AddOrReplaceParamInFile "net.ipv4.conf.all.rp_filter" "=1"  $file $FirstLevel
@@ -77,7 +92,7 @@ echo "==========================================================================
 		AddOrReplaceParamInFile "net.ipv4.conf.all.accept_source_route" "=0"  $file $FirstLevel
 		AddOrReplaceParamInFile "# Ignoring broadcasts request" ""  $file
 		AddOrReplaceParamInFile "net.ipv4.icmp_echo_ignore_broadcasts" "=1"  $file $FirstLevel
-		AddOrReplaceParamInFile "net.ipv4.icmp_ignore_bogus_error_messages" "=1"  $file $FirstLevel
+		AddOrReplaceParamInFile "net.ipv4.icmp_ignore_bogus_error_responses" "=1"  $file $FirstLevel
 		AddOrReplaceParamInFile "# Make sure spoofed packets get logged" ""  $file
 		AddOrReplaceParamInFile "net.ipv4.conf.all.log_martians" "=1"  $file $FirstLevel
 		AddOrReplaceParamInFile "# Anti TCP syn ddos" ""  $file
@@ -134,6 +149,77 @@ echo "==========================================================================
         echo "file $file - NOT exist!!!!"
     fi
 echo ""
+echo "Config Mail..."
+echo "========================================================================================"	
+	file=$rootpath$mailfile
+	if [ -n $SMTPServer ]; then
+		if [ -f $file ]; then
+		 	true
+		else
+			touch $file
+		fi
+
+		if [ -f $file ]; then
+			echo "file $file - exist!"
+			AddOrReplaceParamInFile "myhostname = " "$ExtFQDN"  $file
+			AddOrReplaceParamInFile "mydestination = " "$myDestination"  $file	
+			AddOrReplaceParamInFile "# Enable auth" ""  $file
+			AddOrReplaceParamInFile "smtp_sasl_auth_enable = " "yes"  $file	
+			AddOrReplaceParamInFile "# Set username and password" ""  $file	
+			AddOrReplaceParamInFile "smtp_sasl_password_maps = " "static:$SMTPUser:$SMTPPass"  $file	
+			AddOrReplaceParamInFile "smtp_sasl_security_options = " "noanonymous"  $file	
+			AddOrReplaceParamInFile "# Turn on tls encryption" ""  $file
+			AddOrReplaceParamInFile "smtp_tls_security_level = " "encrypt"  $file
+			AddOrReplaceParamInFile "header_size_limit = " "4096000"  $file
+			AddOrReplaceParamInFile "# Set external SMTP relay host here IP or hostname accepted along with a port number." ""  $file
+			AddOrReplaceParamInFile "relayhost = " "[$SMTPServer]:$SMTPServerPort"  $file
+			AddOrReplaceParamInFile "# accept email from our server only" ""  $file
+			AddOrReplaceParamInFile "inet_interfaces = " "127.0.0.1"  $file	
+			RemoveEmptyStrings $file
+		fi
+		sudo service postfix restart
+		sudo service postfix status
+		netstat -tulpn | grep :25
+		echo "This is a test email body." | mail -s "Test email" -a "From: $SMTPUser" $AdminMail
+		sudo tail /var/log/mail.log
+		sleep 5s
+	fi
+echo ""
+echo "Config Syslog..."
+echo "========================================================================================"	
+	file=$rootpath$syslogfile
+	if [ -f $file ]; then
+        echo "file $file - exist!"
+		AddOrReplaceParamInFile "*.Warning @$Syslog:$SyslogPort" ""  $file		
+		RemoveEmptyStrings $file
+		sudo service rsyslog restart
+		#sudo service rsyslog status
+	else
+        echo "file $file - NOT exist!!!!"
+    fi	
+echo ""
+echo "Config Unattended-Upgrades..."
+echo "========================================================================================"
+	file=$rootpath$unattendedupgrades
+	if [ -f $file ]; then
+        echo "file $file - exist!"
+		AddOrReplaceParamInFile "Unattended-Upgrade::MinimalSteps " '"false";'  $file
+		AddOrReplaceParamInFile "Unattended-Upgrade::InstallOnShutdown " '"false";'  $file
+		AddOrReplaceParamInFile "Unattended-Upgrade::Mail " "\"$AdminMail\";"  $file
+		AddOrReplaceParamInFile "Unattended-Upgrade::Remove-Unused-Kernel-Packages " '"true";'  $file
+		AddOrReplaceParamInFile "Unattended-Upgrade::Remove-Unused-Dependencies " '"true";'  $file
+		AddOrReplaceParamInFile "Unattended-Upgrade::Automatic-Reboot-Time " '"05:00";'  $file
+		AddOrReplaceParamInFile "Unattended-Upgrade::Remove-Unused-Dependencies " '"true";'  $file
+		if [ -n $Syslog ]; then
+			AddOrReplaceParamInFile "Unattended-Upgrade::SyslogEnable " '"true";'  $file
+		fi
+		RemoveEmptyStrings $file
+		unattended-upgrade -v --dry-run
+	else
+        echo "file $file - NOT exist!!!!"
+    fi	
+echo ""
+sleep 2s
 echo "Remove boot delay..."
 echo "========================================================================================"
 	#sudo systemctl edit --full systemd-networkd-wait-online.service
@@ -184,7 +270,27 @@ echo " - Send rkhunter logs every night at 2:55"
 	sudo crontab $file
 	sudo rm $file
 
-file=$rootpath$sshdfile
-CheckConfigFile "sshd -t -f $file"
+echo "Check config files..."
+echo "========================================================================================"
+CheckResult="/opt/projects/scripts/CheckResult.txt"
 
+file=$rootpath$sshdfile
+CorrectAction="service sshd restart"
+CheckConfigFile "sshd -t -f $file" $file $CheckResult "$CorrectAction"
+
+echo ""
+file=$rootpath$sysctlfile
+CheckConfigFile "sysctl -p $file | grep 'sysctl:'" $file $CheckResult
+
+rm $CheckResult
+
+echo ""
 echo "Script complited!"
+read -p "Reboot the system now? [Y/N]" answer
+case $answer in
+   [yY]* ) sudo reboot;;
+
+   [nN]* ) exit;;
+
+   * )     exit;;
+esac
