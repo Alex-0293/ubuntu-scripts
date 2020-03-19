@@ -33,31 +33,30 @@ function ReplaceSpecialCharacters {
         fi
    done
 }
-
 function RemoveEmptyStrings {
     sed -i  '/^$/d' $1
 }
-
 function AddNewString {
     echo  "$1" >> $2
 }
-
 function RemoveStringsByNumbers {
     if [ "$2" != "" ]
     then
         /bin/sed -i -e "$1" $2
     fi
 }
-
 function CheckConfigFile {
     echo ""
     echo "==================================="
     echo "Checking config....."
     #echo "sudo sh -c '$1'"
-    echo $1
-    sudo sh -c "$1"
+    if [ -f $1 ]; then
+        echo "file $1 - exist!"
+        sudo sh -c "$1"
+    else
+        echo "file $1 - NOT exist!!!!"
+    fi
 }
-
 function AddOrReplaceParamInFile {
     #$1 - Param name
     #$2 - Param new value
@@ -66,9 +65,9 @@ function AddOrReplaceParamInFile {
     #echo "/bin/grep -e "$1" -c $3"
     if [ -f "$3" ]
     then
-        echo ""
-        echo "==================================="
-        echo "level="$4
+        #echo ""
+        #echo "==================================="
+        #echo "level="$4
         if [ "$4" != "" ]
         then
             num=$(( $4 * 5 ))
@@ -78,6 +77,8 @@ function AddOrReplaceParamInFile {
             level=""
         fi
     
+        echo $level$1$2
+
         ReplaceSpecialCharacters "$1"
         ReplParam=$ReplaceSpecialCharacters
         ReplaceSpecialCharacters "$2"
@@ -94,19 +95,19 @@ function AddOrReplaceParamInFile {
             NewParamStringRepl="$level$ReplParam"
             NewParamString="$level$1"
         fi
-        echo  $NewParamStringRepl
+        #echo  $NewParamStringRepl
         ParamStringNums=$(cat $3 |sed -n "/$ReplParam/{=}") #grep -e $ReplParam -n $3) 
         #echo "ParamStringNums="$ParamStringNums  
         #Secho "ParamCount="$ParamCount  
         case $ParamCount in
             0)
-                echo "New parameter"
+                #echo "New parameter"
                 AddNewString "$NewParamString" $3
                 #echo  "$NewParamString" >> $3
                 #echo  $NewParamStringRepl            
                 ;;
             1)
-                echo "Existing parameter"
+                #echo "Existing parameter"
                 #echo  $NewParamStringRepl
                 #echo "s/.*$ReplParam.*/$NewParamStringRepl/"
                 #/bin/sed -i -e  "s/.*$ReplParam.*/$NewParamStringRepl/" $3
@@ -118,7 +119,7 @@ function AddOrReplaceParamInFile {
                 #echo  "$NewParamString" >> $3
                 ;;
             *)
-                echo "Multi parameter"    
+                #echo "Multi parameter"    
                 strlist=""
                 cnt=0
                 for var in $ParamStringNums
@@ -145,7 +146,7 @@ function AddOrReplaceParamInFile {
                             cnt=$(( $cnt + 1 ))
                         fi
                 done          
-                echo "strlist="$strlist
+                #echo "strlist="$strlist
                 # echo "cnt="$cnt
                 # if [ $cnt = 1 ]
                 # then
@@ -162,7 +163,7 @@ function AddOrReplaceParamInFile {
                 # fi
                 RemoveStringsByNumbers $strlist $3
                 #/bin/sed -i -e "$strlist" $3
-                    echo  "Add new param: "$NewParamString
+                    #echo  "Add new param: "$NewParamString
                     AddNewString "$NewParamString" $3
                     #echo  "$NewParamString" >> $3
                 #echo $ReplParam                    
@@ -170,6 +171,3 @@ function AddOrReplaceParamInFile {
         esac
     fi
 }
-
-#file=$rootpath$sshdfile
-#AddOrReplaceParamInFile "# Disable root login for ssh" "" $file 

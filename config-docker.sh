@@ -1,25 +1,13 @@
 #!/bin/bash
-source /home/alex/scripts/general.sh
+source ./general.sh
+source ./vars.sh
 
 clear
 
-FirstLevel=1
-SecondLevel=2
-
-rootpath=""
-
-sshdfile="/etc/ssh/sshd_config" 
-sysctlfile="/etc/sysctl.conf" 
-grubfile="/etc/default/grub"
-usbfile="/etc/modprobe.d/disable-usb-storage.conf"
-firewirefile="/etc/modprobe.d/firewire.conf"
-thunderboltfile="/etc/modprobe.d/thunderbolt.conf"
-rkhunterfile="/etc/rkhunter.conf"
-
-echo "Ubuntu 18.04 config started..."
+echo "Ubuntu 18.04 config in docker started..."
 	echo "Time zone and Locale Configuring..."
 	echo "========================================================================================"
-		sudo ln -fs /usr/share/zoneinfo/Europe/Moscow /etc/localtime \
+		sudo ln -fs /usr/share/zoneinfo/$Timezone /etc/localtime \
     	&& dpkg-reconfigure -f noninteractive tzdata
 		sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen \
     	&& locale-gen
@@ -29,7 +17,7 @@ echo "Ubuntu 18.04 config started..."
 	echo "========================================================================================"
 		file=$rootpath$sshdfile
         if [ -f $file ]; then
-            echo "file $rootpath$sshdfile - exist!"
+            echo "file $file - exist!"
             AddOrReplaceParamInFile "# Disable root login for ssh" "" $file 
             AddOrReplaceParamInFile "PermitRootLogin " "no"  $file $FirstLevel
             AddOrReplaceParamInFile "ChallengeResponseAuthentication " "no" $file $FirstLevel

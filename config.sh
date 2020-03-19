@@ -1,42 +1,28 @@
 #!/bin/bash
-source /home/alex/scripts/general.sh
+source ./general.sh
+source ./vars.sh
 
 clear
 
-HostName="Host1"
-AdminMail="ivanovv@advocate-upt.com"
-Company="AB"
-
-FirstLevel=1
-SecondLevel=2
-
-rootpath=""
-
-sshdfile="/etc/ssh/sshd_config"#"sshd_config" 
-sysctlfile="/etc/sysctl.conf"#"sysctl.conf"
-grubfile="/etc/default/grub"#"grub"
-usbfile="/etc/modprobe.d/disable-usb-storage.conf"#"disable-usb-storage.conf"
-firewirefile="/etc/modprobe.d/firewire.conf"#"firewire.conf"
-thunderboltfile="/etc/modprobe.d/thunderbolt.conf"#"thunderbolt.conf"
-rkhunterfile="/etc/rkhunter.conf"
-
 echo "Ubuntu 18.04 config started..."
-	echo "Packets update..."
-	echo "========================================================================================"
-		sudo apt-get update && apt-get upgrade -y
-	echo ""
-	sleep 2s
-	echo "Time zone and Locale Configuring..."
-	echo "========================================================================================"
-		sudo ln -fs /usr/share/zoneinfo/Europe/Moscow /etc/localtime \
-    	&& dpkg-reconfigure -f noninteractive tzdata
-		sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen \
-    	&& locale-gen
-	echo ""
-	sleep 2s
-	echo "SSHD Configuring..."
-	echo "========================================================================================"
-		file=$rootpath$sshdfile
+echo "Packets update..."
+echo "========================================================================================"
+	sudo apt-get update && apt-get upgrade -y
+echo ""
+sleep 2s
+echo "Time zone and Locale Configuring..."
+echo "========================================================================================"
+	sudo ln -fs /usr/share/zoneinfo/$Timezone /etc/localtime \
+	&& dpkg-reconfigure -f noninteractive tzdata
+	sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen \
+	&& locale-gen
+echo ""
+sleep 2s
+echo "SSHD Configuring..."
+echo "========================================================================================"
+	file=$rootpath$sshdfile
+	if [ -f $file ]; then
+        echo "file $file - exist!"
 		AddOrReplaceParamInFile "# Disable root login for ssh" "" $file 
 		AddOrReplaceParamInFile "PermitRootLogin " "no"  $file $FirstLevel
 		AddOrReplaceParamInFile "ChallengeResponseAuthentication " "no" $file $FirstLevel
@@ -72,11 +58,16 @@ echo "Ubuntu 18.04 config started..."
 		AddOrReplaceParamInFile "# Enable only Ipv4" "" $file
 		AddOrReplaceParamInFile "ListenAddress " "0.0.0.0" $file $FirstLevel
 		RemoveEmptyStrings $file
-	echo ""
-	sleep 2s
-	echo "KERNEL Configuring..."
-	echo "========================================================================================"
-		file=$rootpath$sysctlfile
+	else
+        echo "file $file - NOT exist!!!!"
+    fi	
+echo ""
+sleep 2s
+echo "KERNEL Configuring..."
+echo "========================================================================================"
+	file=$rootpath$sysctlfile
+	if [ -f $file ]; then
+        echo "file $file - exist!"
 		AddOrReplaceParamInFile "# Turn on execshield" ""  $file
 		AddOrReplaceParamInFile "kernel.exec-shield" "=1"  $file $FirstLevel
 		AddOrReplaceParamInFile "kernel.randomize_va_space" "=1"  $file $FirstLevel
@@ -92,76 +83,108 @@ echo "Ubuntu 18.04 config started..."
 		AddOrReplaceParamInFile "# Anti TCP syn ddos" ""  $file
 		AddOrReplaceParamInFile "net.ipv4.tcp_syncookies" "=1"  $file $FirstLevel
 		RemoveEmptyStrings $file
-	echo ""
-	sleep 2s
-	echo "Disable IPV6..."
-	echo "========================================================================================"
-		file=$rootpath$grubfile
+	else
+        echo "file $file - NOT exist!!!!"
+    fi
+echo ""
+sleep 2s
+echo "Disable IPV6..."
+echo "========================================================================================"
+	file=$rootpath$grubfile
+	if [ -f $file ]; then
+        echo "file $file - exist!"
 		AddOrReplaceParamInFile "# Disable IPV6" ""  $file
 		AddOrReplaceParamInFile "GRUB_CMDLINE_LINUX_DEFAULT=" '"ipv6.disable=1"'  $file $FirstLevel
 		AddOrReplaceParamInFile "GRUB_CMDLINE_LINUX=" '"ipv6.disable=1"'  $file $FirstLevel
-		RemoveEmptyStrings $file	
-	echo ""
-	sleep 2s
-	echo "Disable USB/firewire/thunderbolt devices..."
-	echo "========================================================================================"
-		file=$rootpath$usbfile
+		RemoveEmptyStrings $file
+	else
+        echo "file $file - NOT exist!!!!"
+    fi	
+echo ""
+sleep 2s
+echo "Disable USB/firewire/thunderbolt devices..."
+echo "========================================================================================"
+	file=$rootpath$usbfile
+	if [ -f $file ]; then
+        echo "file $file - exist!"
 		AddOrReplaceParamInFile "# Disable USB devices" ""  $file
 		AddOrReplaceParamInFile "install usb-storage " "/bin/true"  $file $FirstLevel
 		RemoveEmptyStrings $file
+	else
+        echo "file $file - NOT exist!!!!"
+    fi
 
-		file=$rootpath$firewirefile
+	file=$rootpath$firewirefile
+	if [ -f $file ]; then
+        echo "file $file - exist!"
 		AddOrReplaceParamInFile "# Disable firewire devices" ""  $file
 		AddOrReplaceParamInFile "blacklist firewire-core" ""  $file $FirstLevel
 		RemoveEmptyStrings $file
+	else
+        echo "file $file - NOT exist!!!!"
+    fi
 
-		file=$rootpath$thunderboltfile
+	file=$rootpath$thunderboltfile
+	if [ -f $file ]; then
+        echo "file $file - exist!"
 		AddOrReplaceParamInFile "# Disable thunderbolt devices" ""  $file
 		AddOrReplaceParamInFile "blacklist thunderbolt" ""  $file $FirstLevel
 		RemoveEmptyStrings $file
-	echo ""
-	echo "Remove boot delay..."
-	echo "========================================================================================"
-		#sudo systemctl edit --full systemd-networkd-wait-online.service
-		#ExecStart=/lib/systemd/systemd-networkd-wait-online --timeout 1
-	echo ""
-	    sleep 2s
-	echo "Install RKHunter IDS..."
-	echo "========================================================================================"
-		sudo apt-get install rkhunter -y
-		sleep 20s
-        file=$rootpath$rkhunterfile
+	else
+        echo "file $file - NOT exist!!!!"
+    fi
+echo ""
+echo "Remove boot delay..."
+echo "========================================================================================"
+	#sudo systemctl edit --full systemd-networkd-wait-online.service
+	#ExecStart=/lib/systemd/systemd-networkd-wait-online --timeout 1
+echo ""
+	sleep 2s
+echo "Install RKHunter IDS..."
+echo "========================================================================================"
+	sudo apt-get install rkhunter -y
+	sleep 20s
+	file=$rootpath$rkhunterfile
+	if [ -f $file ]; then
+        echo "file $file - exist!"
 		AddOrReplaceParamInFile "UPDATE_MIRRORS=" "1"  $file $FirstLevel
-        AddOrReplaceParamInFile "MIRRORS_MODE=" "0"  $file $FirstLevel
-        AddOrReplaceParamInFile "/'WEB_CMD=" "/"/"/'"  $file $FirstLevel
-		#echo 'WEB_CMD=""' >> /etc/rkhunter.conf
-		sudo rkhunter --check --sk
-		sudo rkhunter --update
-	echo ""
-	    sleep 2s
-	echo "Installing Fail2ban..."
-	echo "========================================================================================"
-		sudo apt-get install fail2ban -y	
-	echo ""
-	echo "Remove unused packages..."
-	echo "========================================================================================"
-	    sudo apt autoremove -y
-	echo ""
-    echo "Add scheduled tasks..."
-	echo "========================================================================================"
-        #write out current crontab
-        file="/tmp/mycron"
-        sudo crontab -l > $file
-        #echo new cron into cron file
-    echo " - Reboot every sat at 3:00"   
-		AddOrReplaceParamInFile "0 3 * * 6 sudo sh -c '/bin/date>>/var/log/reboot.log && uptime>>/var/log/reboot.log && /sbin/reboot'" ""  $file $FirstLevel
-    echo " - Update rkhunter every night at 2:30"     
-        AddOrReplaceParamInFile "30 2 * * * sudo sh -c '/usr/bin/rkhunter --update>>/var/log/rkhunter-upd.log'" ""  $file $FirstLevel
-    echo " - Run rkhunter every night at 2:40"     
-        AddOrReplaceParamInFile "40 2 * * * sudo sh -c '/usr/bin/rkhunter'" ""  $file $FirstLevel
-    echo " - Send rkhunter logs every night at 2:55"
-        AddOrReplaceParamInFile "55 2 * * 7 grep -e 'Warning' -e 'Error' -e 'Fail' /var/log/rkhunter.log | mail -s '$Company RKHunter' -a 'From: RKHunter@$HostName.$Company.local' $AdminMail" ""  $file $FirstLevel    
-        #install new cron file
-        sudo crontab $file
-        sudo rm $file
-	echo "Script complited!"
+		AddOrReplaceParamInFile "MIRRORS_MODE=" "0"  $file $FirstLevel
+		AddOrReplaceParamInFile "/'WEB_CMD=" "/"/"/'"  $file $FirstLevel
+	else
+        echo "file $file - NOT exist!!!!"
+    fi
+	#echo 'WEB_CMD=""' >> /etc/rkhunter.conf
+	sudo rkhunter --check --sk
+	sudo rkhunter --update
+echo ""
+	sleep 2s
+echo "Installing Fail2ban..."
+echo "========================================================================================"
+	sudo apt-get install fail2ban -y	
+echo ""
+echo "Remove unused packages..."
+echo "========================================================================================"
+	sudo apt autoremove -y
+echo ""
+echo "Add scheduled tasks..."
+echo "========================================================================================"
+	#write out current crontab
+	file="/tmp/mycron"
+	sudo crontab -l > $file
+	#echo new cron into cron file
+echo " - Reboot every sat at 3:00"   
+	AddOrReplaceParamInFile "0 3 * * 6 sudo sh -c '/bin/date>>/var/log/reboot.log && uptime>>/var/log/reboot.log && /sbin/reboot'" ""  $file $FirstLevel
+echo " - Update rkhunter every night at 2:30"     
+	AddOrReplaceParamInFile "30 2 * * * sudo sh -c '/usr/bin/rkhunter --update>>/var/log/rkhunter-upd.log'" ""  $file $FirstLevel
+echo " - Run rkhunter every night at 2:40"     
+	AddOrReplaceParamInFile "40 2 * * * sudo sh -c '/usr/bin/rkhunter'" ""  $file $FirstLevel
+echo " - Send rkhunter logs every night at 2:55"
+	AddOrReplaceParamInFile "55 2 * * 7 grep -e 'Warning' -e 'Error' -e 'Fail' /var/log/rkhunter.log | mail -s '$Company RKHunter' -a 'From: RKHunter@$HostName.$Company.local' $AdminMail" ""  $file $FirstLevel    
+	#install new cron file
+	sudo crontab $file
+	sudo rm $file
+
+file=$rootpath$sshdfile
+CheckConfigFile "sshd -t -f $file"
+
+echo "Script complited!"
