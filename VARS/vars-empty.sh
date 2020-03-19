@@ -27,6 +27,14 @@ myDestination="$HostName@$Company.local, $ExtFQDN, $HostName, localhost.localdom
 SMTPUser=""
 SMTPPass=""
 
+#Add tasks. This is task block with number
+#Task1Comment=" - Reboot every sat at 3:00"
+#Task1time="0 3 * * 6"
+#Task1="sudo sh -c '/bin/date>>/var/log/reboot.log && uptime>>/var/log/reboot.log && /sbin/reboot'"
+Task1Comment=""
+Task1time=""
+Task1=""
+
 # prefix for testing in different path`s ""
 rootpath=""
 
@@ -46,4 +54,3 @@ mailfile="/etc/postfix/main.cf"
 FirstLevel=1
 SecondLevel=2
 
-### Rename this file to vars.sh in production!!!!!
