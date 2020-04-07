@@ -293,9 +293,9 @@ if [ -n $dockerUser ]; then
 	curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
 	#Use the following command to set up the stable repository
 	sudo add-apt-repository \
-	deb [arch=amd64] https://download.docker.com/linux/ubuntu \
+	"deb [arch=amd64] https://download.docker.com/linux/ubuntu \
 	$(lsb_release -cs) \
-	stable
+	stable"
 	docker -v   
 	sleep 2s
 	echo ""
