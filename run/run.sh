@@ -1,2 +1,2 @@
 cd ..
-./config.sh "./VARS/vars-empty.sh" "./empty-setup.log"
+./config.sh "./vars/vars-empty.sh" "./empty-setup.log"
