@@ -5,3 +5,4 @@ RUN/vm.sh
 VARS/vars-docker.sh
 VARS/vars-vm.sh
 .gitignore
+empty-setup.log

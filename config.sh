@@ -8,16 +8,15 @@ source ./general.sh
 clear
 
 exec > >(tee $2) 2>&1
-
 echo "Ubuntu 18.04 config started..."
-if [ -n $HostName ]; then
+if [ -n "${HostName}" ]; then
 	echo "Set hostname..."
 	echo "========================================================================================"
 	sudo hostnamectl set-hostname $HostName
 	echo $HostName
 	echo ""
 fi
-if [ -n $NtpServer ]; then
+if [ -n "${NtpServer}" ]; then
 	echo "Set NTP server..."
 	echo "========================================================================================"
 	echo "NTP=$NtpServer" >> /etc/systemd/timesyncd.conf
@@ -33,7 +32,7 @@ echo "Packets update..."
 	sudo apt-get update && apt-get upgrade -y
 	echo ""
 	sleep 2s
-if [ -n $Timezone ]; then
+if [ -n "${Timezone}" ]; then
 	echo "Time zone and Locale Configuring..."
 	echo "========================================================================================"
 		sudo ln -fs /usr/share/zoneinfo/$Timezone /etc/localtime \
@@ -43,11 +42,11 @@ if [ -n $Timezone ]; then
 	sleep 2s
 	echo ""
 fi
-if [ -n $sshdfile ]; then
+if [ -n $"${sshdfile}" ]; then
 	echo "SSHD Configuring..."
 	echo "========================================================================================"
 	file=$rootpath$sshdfile
-	if [ -f $file ]; then
+	if [ -f file ]; then
 		echo "file $file - exist!"
 		AddOrReplaceParamInFile "# Disable root login for ssh" "" $file 
 		AddOrReplaceParamInFile "PermitRootLogin " "no"  $file $FirstLevel
@@ -90,7 +89,7 @@ if [ -n $sshdfile ]; then
 	sleep 2s
 	echo ""
 fi
-if [ -n $sysctlfile ]; then
+if [ -n "${sysctlfile}" ]; then
 	echo "KERNEL Configuring..."
 	echo "========================================================================================"
 	file=$rootpath$sysctlfile
@@ -117,7 +116,7 @@ if [ -n $sysctlfile ]; then
 	sleep 2s
 	echo ""	
 fi
-if [ -n $grubfile ]; then
+if [ -n "${grubfile}" ]; then
 	echo "Disable IPV6..."
 	echo "========================================================================================"
 	file=$rootpath$grubfile
@@ -133,7 +132,7 @@ if [ -n $grubfile ]; then
 	sleep 2s
 	echo ""
 fi
-if [ -n $usbfile ]; then
+if [ -n "${usbfile}" ]; then
 	echo "Disable USB/firewire/thunderbolt devices..."
 	echo "========================================================================================"
 		file=$rootpath$usbfile
@@ -167,11 +166,11 @@ if [ -n $usbfile ]; then
 		fi
 	echo ""
 fi
-if [ -n $mailfile ]; then
+if [ -n "${mailfile}" ]; then
 	echo "Config Mail..."
 	echo "========================================================================================"	
 	file=$rootpath$mailfile
-	if [ -n $SMTPServer ]; then
+	if [ -n "${SMTPServer}" ]; then
 		if [ -f $file ]; then
 			true
 		else
@@ -205,7 +204,7 @@ if [ -n $mailfile ]; then
 	fi
 	echo ""
 fi
-if [ -n $syslogfile ]; then
+if [ -n "${syslogfile}" ]; then
 	echo "Config Syslog..."
 	echo "========================================================================================"	
 	file=$rootpath$syslogfile
@@ -220,7 +219,7 @@ if [ -n $syslogfile ]; then
 	fi	
 	echo ""
 fi
-if [ -n $unattendedupgrades ]; then
+if [ -n "${unattendedupgrades}" ]; then
 	echo "Config Unattended-Upgrades..."
 	echo "========================================================================================"
 	file=$rootpath$unattendedupgrades
@@ -244,7 +243,7 @@ if [ -n $unattendedupgrades ]; then
 	sleep 2s
 	echo ""	
 fi
-if [ -n $rkhunterfile ]; then
+if [ -n "${rkhunterfile}" ]; then
 	echo "Install RKHunter IDS..."
 	echo "========================================================================================"
 	sudo apt-get install rkhunter -y
@@ -264,15 +263,17 @@ if [ -n $rkhunterfile ]; then
 	sleep 2s
 	echo ""	
 fi
-echo "Installing Fail2ban..."
+if [ -n "${Fail2ban}" ]; then
+	echo "Installing Fail2ban..."
 	echo "========================================================================================"
 		sudo apt-get install fail2ban -y	
 	echo ""
-echo "Remove unused packages..."
+fi
+	echo "Remove unused packages..."
 	echo "========================================================================================"
 	sudo apt autoremove -y
 	echo ""
-if [ -n $dockerUser ]; then
+if [ -n "${dockerUser}" ]; then
 	echo "Install docker..."
 	echo "========================================================================================"
 	# Download Docker
@@ -307,7 +308,7 @@ if [ -n $dockerUser ]; then
 	sleep 2s
 	echo ""
 fi
-if [ -n $Task1 ]; then
+if [ -n "${Task1}" ]; then
 	echo "Add scheduled tasks..."
 	echo "========================================================================================"
 	#write out current crontab
@@ -326,7 +327,7 @@ if [ -n $Task1 ]; then
 	sudo crontab $file
 	sudo rm $file
 fi
-if [ -n $sshdfile ]; then
+if [ -n "${sshdfile}" ]; then
 	echo "Check config files..."
 	echo "========================================================================================"
 	CheckResult="/opt/projects/scripts/CheckResult.txt"
